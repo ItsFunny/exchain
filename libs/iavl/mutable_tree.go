@@ -169,13 +169,13 @@ func (tree *MutableTree) set(key []byte, value []byte) (orphans []*Node, updated
 
 	if tree.ImmutableTree.root == nil {
 		tree.ImmutableTree.root = NewNode(key, value, tree.version+1)
-		fmt.Println("green", tree.GetModuleName(), tree.root.height)
+		iavlLog(tree.GetModuleName(), IavlInfo, fmt.Sprintf("height is %d", tree.root.height))
 		return nil, updated
 	}
 
 	orphans = tree.prepareOrphansSlice()
 	tree.ImmutableTree.root, updated = tree.recursiveSet(tree.ImmutableTree.root, key, value, &orphans)
-	fmt.Println("green", tree.GetModuleName(), tree.ImmutableTree.root.height)
+	iavlLog(tree.GetModuleName(), IavlInfo, fmt.Sprintf("height is %d", tree.root.height))
 	return orphans, updated
 }
 
