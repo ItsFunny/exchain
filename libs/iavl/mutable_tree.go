@@ -175,7 +175,7 @@ func (tree *MutableTree) set(key []byte, value []byte) (orphans []*Node, updated
 
 	orphans = tree.prepareOrphansSlice()
 	tree.ImmutableTree.root, updated = tree.recursiveSet(tree.ImmutableTree.root, key, value, &orphans)
-	iavlLog(tree.GetModuleName(), IavlInfo, fmt.Sprintf("height is %d", tree.root.height))
+	iavlLog(tree.GetModuleName(), IavlInfo, fmt.Sprintf("[%s]height is %d", tree.GetModuleName(), tree.root.height))
 	return orphans, updated
 }
 
