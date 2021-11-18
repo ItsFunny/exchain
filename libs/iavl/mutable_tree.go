@@ -169,6 +169,7 @@ func (tree *MutableTree) set(key []byte, value []byte) (orphans []*Node, updated
 
 	if tree.ImmutableTree.root == nil {
 		tree.ImmutableTree.root = NewNode(key, value, tree.version+1)
+		fmt.Println("green", tree.GetModuleName(), tree.root.height)
 		return nil, updated
 	}
 
