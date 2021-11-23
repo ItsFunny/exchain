@@ -797,6 +797,11 @@ func (mem *CListMempool) Update(
 	preCheck PreCheckFunc,
 	postCheck PostCheckFunc,
 ) error {
+	trc := trace.NewTracer(trace.Update)
+	defer func() {
+		trace.GetElapsedInfo().AddInfo(trace.Update, trc.Format())
+	}()
+
 	// Set height
 	mem.height = height
 	mem.notifiedTxsAvailable = false
@@ -808,6 +813,7 @@ func (mem *CListMempool) Update(
 		mem.postCheck = postCheck
 	}
 
+	trc.Pin("UpdateTxs")
 	var gasUsed uint64
 	toCleanAccMap := make(map[string]uint64)
 	addressNonce := make(map[string]uint64)
@@ -873,6 +879,7 @@ func (mem *CListMempool) Update(
 
 	// Either recheck non-committed txs to see if they became invalid
 	// or just notify there're some txs left.
+	trc.Pin("RecheckTxs")
 	if mem.Size() > 0 {
 		if cfg.DynamicConfig.GetMempoolRecheck() || height%cfg.DynamicConfig.GetMempoolForceRecheckGap() == 0 {
 			mem.logger.Info("Recheck txs", "numtxs", mem.Size(), "height", height)
