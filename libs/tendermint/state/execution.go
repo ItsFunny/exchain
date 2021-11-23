@@ -252,7 +252,7 @@ func (blockExec *BlockExecutor) Commit(
 	block *types.Block,
 	deliverTxResponses []*abci.ResponseDeliverTx,
 ) ([]byte, int64, error) {
-	trc := trace.NewTracer(trace.Commit)
+	trc := trace.NewTracer(trace.Persist)
 
 	blockExec.mempool.Lock()
 	defer func() {
@@ -262,7 +262,7 @@ func (blockExec *BlockExecutor) Commit(
 			blockExec.mempool.Flush()
 		}
 
-		trace.GetElapsedInfo().AddInfo(trace.Commit, trc.Format())
+		trace.GetElapsedInfo().AddInfo(trace.Persist, trc.Format())
 	}()
 
 	// while mempool is Locked, flush to ensure all async requests have completed

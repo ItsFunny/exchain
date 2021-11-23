@@ -27,7 +27,7 @@ const (
 	Persist    = "persist"
 	SaveState  = "saveState"
 
-	Commit      = "Commit"
+	// persist: (blockExec *BlockExecutor) Commit
 	FlushAppConn = "FlushAppConn"
 	CommitSync   = "CommitSync"
 	Update       = "Update"
