@@ -2,12 +2,12 @@ package analyzer
 
 import (
 	"fmt"
-	sm "github.com/okex/exchain/libs/tendermint/state"
-	"github.com/spf13/viper"
 	"strings"
 
-	"github.com/okex/exchain/libs/tendermint/trace"
 	bam "github.com/okex/exchain/libs/cosmos-sdk/baseapp"
+	sm "github.com/okex/exchain/libs/tendermint/state"
+	"github.com/okex/exchain/libs/tendermint/trace"
+	"github.com/spf13/viper"
 )
 
 var singleAnalys *analyer
@@ -247,5 +247,5 @@ func (s *analyer) format() {
 	format = strings.TrimRight(format, ", ")
 	trace.GetElapsedInfo().AddInfo(trace.Evm, fmt.Sprintf(EVM_FORMAT, s.dbRead, s.dbWrite, evmcore-s.dbRead-s.dbWrite))
 
-	trace.GetElapsedInfo().AddInfo("DeliverTxs", format)
+	trace.GetElapsedInfo().AddInfo(trace.DeliverTxs, format)
 }

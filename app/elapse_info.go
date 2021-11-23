@@ -2,20 +2,20 @@ package app
 
 import (
 	"fmt"
-	"github.com/spf13/viper"
 	"strings"
 	"sync"
 
 	"github.com/okex/exchain/libs/tendermint/libs/log"
 	"github.com/okex/exchain/libs/tendermint/trace"
+	"github.com/spf13/viper"
 )
 
 var (
 	once         sync.Once
-	CUSTOM_PRINT = []string{trace.Evm, trace.Iavl, trace.DeliverTxs, trace.Round, trace.CommitRound, trace.Produce}
+	CUSTOM_PRINT = []string{trace.Commit, trace.Evm, trace.Iavl, trace.DeliverTxs, trace.Round, trace.CommitRound, trace.Produce}
 
-	DefaultElapsedSchemas = fmt.Sprintf("%s=1,%s=1,%s=1,%s=0,%s=0,%s=0",
-		trace.Evm, trace.Iavl, trace.DeliverTxs, trace.Round, trace.CommitRound, trace.Produce)
+	DefaultElapsedSchemas = fmt.Sprintf("%s=1,%s=1,%s=1,%s=1,%s=0,%s=0,%s=0",
+		trace.Commit, trace.Evm, trace.Iavl, trace.DeliverTxs, trace.Round, trace.CommitRound, trace.Produce)
 )
 
 const (
@@ -71,12 +71,12 @@ func (e *ElapsedTimeInfos) Dump(logger log.Logger) {
 		}
 	}
 
-	info := fmt.Sprintf("%s<%s>, %s<%s>, %s<%s>, %s[%s], %s<%s>",
+	info := fmt.Sprintf("%s<%s>, %s<%s>, %s<%s>, %s<%s>, %s[%s]",
 		trace.Height, e.infoMap[trace.Height],
 		trace.Tx, e.infoMap[trace.Tx],
+		trace.InvalidTxs, e.infoMap[trace.InvalidTxs],
 		trace.GasUsed, e.infoMap[trace.GasUsed],
 		trace.RunTx, e.infoMap[trace.RunTx],
-		trace.InvalidTxs, e.infoMap[trace.InvalidTxs],
 	)
 
 	if len(detailInfo) > 0 {

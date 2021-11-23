@@ -252,6 +252,8 @@ func (blockExec *BlockExecutor) Commit(
 	block *types.Block,
 	deliverTxResponses []*abci.ResponseDeliverTx,
 ) ([]byte, int64, error) {
+	trc := trace.NewTracer(trace.Commit)
+
 	blockExec.mempool.Lock()
 	defer func() {
 		blockExec.mempool.Unlock()
@@ -259,10 +261,13 @@ func (blockExec *BlockExecutor) Commit(
 		if cfg.DynamicConfig.GetMempoolFlush() {
 			blockExec.mempool.Flush()
 		}
+
+		trace.GetElapsedInfo().AddInfo(trace.Commit, trc.Format())
 	}()
 
 	// while mempool is Locked, flush to ensure all async requests have completed
 	// in the ABCI app before Commit.
+	trc.Pin(trace.FlushAppConn)
 	err := blockExec.mempool.FlushAppConn()
 	if err != nil {
 		blockExec.logger.Error("Client error during mempool.FlushAppConn", "err", err)
@@ -270,6 +275,7 @@ func (blockExec *BlockExecutor) Commit(
 	}
 
 	// Commit block, get hash back
+	trc.Pin(trace.CommitSync)
 	res, err := blockExec.proxyApp.CommitSync()
 	if err != nil {
 		blockExec.logger.Error(
@@ -286,7 +292,7 @@ func (blockExec *BlockExecutor) Commit(
 		"txs", len(block.Txs),
 		"appHash", fmt.Sprintf("%X", res.Data),
 	)
-
+	trc.Pin(trace.Update)
 	// Update mempool.
 	err = blockExec.mempool.Update(
 		block.Height,

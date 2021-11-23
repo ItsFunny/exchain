@@ -27,6 +27,11 @@ const (
 	Persist    = "persist"
 	SaveState  = "saveState"
 
+	Commit      = "Commit"
+	FlushAppConn = "FlushAppConn"
+	CommitSync   = "CommitSync"
+	Update       = "Update"
+
 	ApplyBlock = "ApplyBlock"
 	Consensus  = "Consensus"
 )
