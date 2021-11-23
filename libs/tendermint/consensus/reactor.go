@@ -292,10 +292,12 @@ func (conR *Reactor) Receive(chID byte, src p2p.Peer, msgBytes []byte) {
 		switch msg := msg.(type) {
 		case *ProposalMessage:
 			ps.SetHasProposal(msg.Proposal)
+			// 接收其他节点的 proposal 信息
 			conR.conS.peerMsgQueue <- msgInfo{msg, src.ID()}
 		case *ProposalPOLMessage:
 			ps.ApplyProposalPOLMessage(msg)
 		case *BlockPartMessage:
+			// 接收其他节点的 blockpart 信息
 			ps.SetHasProposalBlockPart(msg.Height, msg.Round, msg.Part.Index)
 			conR.metrics.BlockParts.With("peer_id", string(src.ID())).Add(1)
 			conR.conS.peerMsgQueue <- msgInfo{msg, src.ID()}
@@ -386,6 +388,7 @@ func (conR *Reactor) subscribeToBroadcastEvents() {
 			conR.broadcastNewRoundStepMessage(data.(*cstypes.RoundState))
 		})
 
+	// 完整区块是通过 pub 订阅获取  reactor 发出
 	conR.conS.evsw.AddListenerForEvent(subscriber, types.EventValidBlock,
 		func(data tmevents.EventData) {
 			conR.broadcastNewValidBlockMessage(data.(*cstypes.RoundState))

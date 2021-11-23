@@ -241,7 +241,7 @@ func (cs *State) GetLastHeight() int64 {
 // GetRoundState returns a shallow copy of the internal consensus state.
 func (cs *State) GetRoundState() *cstypes.RoundState {
 	cs.mtx.RLock()
-	rs := cs.RoundState // copy
+	rs := cs.RoundState // copy 值拷贝？
 	cs.mtx.RUnlock()
 	return &rs
 }
@@ -269,6 +269,7 @@ func (cs *State) GetValidators() (int64, []*types.Validator) {
 
 // SetPrivValidator sets the private validator account for signing votes. It
 // immediately requests pubkey and caches it.
+//
 func (cs *State) SetPrivValidator(priv types.PrivValidator) {
 	cs.mtx.Lock()
 	defer cs.mtx.Unlock()
@@ -309,6 +310,7 @@ func (cs *State) OnStart() error {
 	// we may set the WAL in testing before calling Start,
 	// so only OpenWAL if its still the nilWAL
 	if _, ok := cs.wal.(nilWAL); ok {
+		fmt.Println("cs.wal ok")
 		walFile := cs.config.WalFile()
 		fmt.Println("walFile--->", walFile)
 		wal, err := cs.OpenWAL(walFile)
@@ -413,17 +415,6 @@ func (cs *State) OpenWAL(walFile string) (WAL, error) {
 // TODO: should these return anything or let callers just use events?
 
 
-func (cs *State) AddVote111(vote *types.Vote, peerID p2p.ID) (added bool, err error) {
-	if peerID == "" {
-		cs.internalMsgQueue <- msgInfo{&VoteMessage{vote}, ""}
-	} else {
-		cs.peerMsgQueue <- msgInfo{&VoteMessage{vote}, peerID}
-	}
-
-	// TODO: wait for event?!
-	return false, nil
-}
-
 // SetProposal inputs a proposal.
 func (cs *State) SetProposal(proposal *types.Proposal, peerID p2p.ID) error {
 
@@ -451,7 +442,7 @@ func (cs *State) AddProposalBlockPart(height int64, round int, part *types.Part,
 }
 
 // SetProposalAndBlock inputs the proposal and all block parts.
-func (cs *State) SetProposalAndBlock(
+func (cs *State) SetProposalAndBlock22(
 	proposal *types.Proposal,
 	block *types.Block,
 	parts *types.PartSet,
@@ -485,15 +476,21 @@ func (cs *State) updateRoundStep(round int, step cstypes.RoundStepType) {
 // enterNewRound(height, 0) at cs.StartTime.
 // height 区块高度  0 第几轮
 func (cs *State) scheduleRound0(rs *cstypes.RoundState) {
+
 	//cs.Logger.Info("scheduleRound0", "now", tmtime.Now(), "startTime", cs.StartTime)
 	sleepDuration := rs.StartTime.Sub(tmtime.Now())
 	// 开始时间 减去 当前时间 = 睡眠时间
 	// 设置定时器，超时后重置
+	//fmt.Println("rs.Height--->", rs.Height)
+	fmt.Println("rs--scheduleRound0->", rs)
+
 	cs.scheduleTimeout(sleepDuration, rs.Height, 0, cstypes.RoundStepNewHeight)
 }
 
 // Attempt to schedule a timeout (by sending timeoutInfo on the tickChan)
 func (cs *State) scheduleTimeout(duration time.Duration, height int64, round int, step cstypes.RoundStepType) {
+	fmt.Println("rs--scheduleTimeout->", duration, height, round, step)
+
 	cs.timeoutTicker.ScheduleTimeout(timeoutInfo{duration, height, round, step})
 }
 
@@ -673,8 +670,8 @@ func (cs *State) receiveRoutine(maxSteps int) {
 		// 收到tx 广播
 		case <-cs.txNotifier.TxsAvailable():
 			cs.handleTxsAvailable()
-		//
 		case mi = <-cs.peerMsgQueue:
+			//从consensus  reactor 接收写入
 			// 先持久化 在处理
 			cs.wal.Write(mi)
 			// handles proposals, block parts, votes
@@ -696,11 +693,13 @@ func (cs *State) receiveRoutine(maxSteps int) {
 
 			// handles proposals, block parts, votes
 			cs.handleMsg(mi)
-			//这个是做啥用的？
+
 		case ti := <-cs.timeoutTicker.Chan(): // tockChan:
+			fmt.Println("got timeoutTicker", ti, rs)
 			cs.wal.Write(ti)
 			// if the timeout is relevant to the rs
 			// go to the next step
+
 			cs.handleTimeout(ti, rs)
 		case <-cs.Quit():
 			onExit(cs)
@@ -782,6 +781,7 @@ func (cs *State) handleTimeout(ti timeoutInfo, rs cstypes.RoundState) {
 	cs.Logger.Debug("Received tock", "timeout", ti.Duration, "height", ti.Height, "round", ti.Round, "step", ti.Step)
 
 	// timeouts must be for current height, round, step
+	// rs 从哪初始化的？？
 	if ti.Height != rs.Height || ti.Round < rs.Round || (ti.Round == rs.Round && ti.Step < rs.Step) {
 		cs.Logger.Debug("Ignoring tock because we're ahead", "height", rs.Height, "round", rs.Round, "step", rs.Step)
 		return
@@ -801,10 +801,11 @@ func (cs *State) handleTimeout(ti timeoutInfo, rs cstypes.RoundState) {
 		cs.trc.Reset()
 		cs.enterNewRound(ti.Height, 0)
 	case cstypes.RoundStepNewRound:
-		cs.enterPropose(ti.Height, 0)
+		cs.enterPropose(ti.Height, 0) //  proposer 最终调用 decideProposal  内部发送proposal 和  block 并设置了定时器RoundStepPropose
 	case cstypes.RoundStepPropose:
 		//enterPropsal 发送这个定时器，这里定时器到期
-		cs.eventBus.PublishEventTimeoutPropose(cs.RoundStateEvent())
+		cs.eventBus.PublishEventTimeoutPropose(cs.RoundStateEvent()) // eventBus
+		// 通过
 		cs.enterPrevote(ti.Height, ti.Round)
 	case cstypes.RoundStepPrevoteWait:
 		cs.eventBus.PublishEventTimeoutWait(cs.RoundStateEvent())
@@ -855,7 +856,7 @@ func (cs *State) handleTxsAvailable() {
 // NOTE: cs.StartTime was already set for height.
 //
 func (cs *State) enterNewRound(height int64, round int) {
-	debug.PrintStack()
+	//debug.PrintStack()
 	logger := cs.Logger.With("height", height, "round", round)
 
 	if cs.Height != height || round < cs.Round || (cs.Round == round && cs.Step != cstypes.RoundStepNewHeight) {
@@ -895,6 +896,7 @@ func (cs *State) enterNewRound(height int64, round int) {
 	// 更新cs 的 轮数和step 阶段
 	cs.updateRoundStep(round, cstypes.RoundStepNewRound)
 	cs.Validators = validators
+	fmt.Println("round--->", round)
 	if round == 0 {
 		// We've already reset these upon new height,
 		// and meanwhile we might have received a proposal
@@ -908,6 +910,7 @@ func (cs *State) enterNewRound(height int64, round int) {
 	cs.Votes.SetRound(round + 1) // also track next round (round+1) to allow round-skipping
 	cs.TriggeredTimeoutPrecommit = false
 
+	// 通过事件总线把消息发送到其他peers v ？？
 	cs.eventBus.PublishEventNewRound(cs.NewRoundEvent())
 	cs.metrics.Rounds.Set(float64(round))
 
@@ -917,30 +920,38 @@ func (cs *State) enterNewRound(height int64, round int) {
 	// round ==0 代表
 	waitForTxs := cs.config.WaitForTxs() && round == 0 && !cs.needProofBlock(height)
 	if waitForTxs {
-		//
+		// 晚点进入RoundStepNewRound ，执行enterPropose
+		fmt.Println("fuzzy1--")
 		if cs.config.CreateEmptyBlocksInterval > 0 {
 			cs.scheduleTimeout(cs.config.CreateEmptyBlocksInterval, height, round,
 				cstypes.RoundStepNewRound)
 		}
 	} else {
-		// round != 0 ?? 立刻进入propose
+		// round != 0 ?? 立刻进入propose  初始块立刻进入enterPropose 不用等txs
+		// 立刻执行 enterPropose
+		fmt.Println("fuzzy2--")
 		cs.enterPropose(height, round)
 	}
 }
 
 // needProofBlock returns true on the first height (so the genesis app hash is signed right away)
 // and where the last block (height-1) caused the app hash to change
+// true 1 、初始块
+// 2、
 func (cs *State) needProofBlock(height int64) bool {
 	if height == types.GetStartBlockHeight()+1 {
 		// height = 1 才会走到这里  第一个区块
 		return true
 	}
 
+	//不是初始块走到这里，加载上一个区块的元数据，
 	lastBlockMeta := cs.blockStore.LoadBlockMeta(height - 1)
 	if lastBlockMeta == nil {
 		panic(fmt.Sprintf("needProofBlock: last block meta for height %d not found", height-1))
 	}
-	// 状态机的 AppHash 与 存储中AppHash 不相等返回true
+
+	// 返回false 表示状态机hash 与 数据库中 相等
+	// true 表示不相等
 	return !bytes.Equal(cs.state.AppHash, lastBlockMeta.Header.AppHash)
 }
 
@@ -979,16 +990,20 @@ func (cs *State) enterPropose(height int64, round int) {
 		// If we have the whole proposal + POL, then goto Prevote now.
 		// else, we'll enterPrevote when the rest of the proposal is received (in AddProposalBlockPart),
 		// or else after timeoutPropose
+		//
 		if cs.isProposalComplete() {
+			//自产自发能走到这里 快速进入enterPrevote
 			cs.enterPrevote(height, cs.Round)
 		}
 	}()
 
 	// If we don't get the proposal and all block parts quick enough, enterPrevote
 	// 设置一个提案的超时时间？？？ cs.config.Propose(round)
+	// 通过定时器争当proposal
 	cs.scheduleTimeout(cs.config.Propose(round), height, round, cstypes.RoundStepPropose)
 
 	// Nothing more to do if we're not a validator
+	// privValidator 为空意味着我们不是validator 用于区别 r v节点
 	if cs.privValidator == nil {
 		logger.Debug("This node is not a validator")
 		return
@@ -998,6 +1013,7 @@ func (cs *State) enterPropose(height int64, round int) {
 	if cs.privValidatorPubKey == nil {
 		// If this node is a validator & proposer in the current round, it will
 		// miss the opportunity to create a block.
+		//
 		logger.Error(fmt.Sprintf("enterPropose: %v", errPubKeyIsNotSet))
 		return
 	}
@@ -1011,7 +1027,7 @@ func (cs *State) enterPropose(height int64, round int) {
 
 	track.setBlockProposer(height, cs.Validators.GetProposer().Address.String())
 	if cs.isProposer(address) {
-		// 自己就是validator
+		// 自己就是 proposer
 		track.setIsProposer(height, true)
 		logger.Info("enterPropose: Our turn to propose",
 			"proposer",
@@ -1021,6 +1037,7 @@ func (cs *State) enterPropose(height int64, round int) {
 		//
 		cs.decideProposal(height, round)
 	} else {
+		// 自己不是 proposer
 		track.setIsProposer(height, false)
 		logger.Info("enterPropose: Not our turn to propose",
 			"proposer",
@@ -1041,9 +1058,11 @@ func (cs *State) defaultDecideProposal(height int64, round int) {
 
 	// Decide on block
 	if cs.ValidBlock != nil {
+		fmt.Println("ValidBlock != nil")
 		// If there is valid block, choose that.
 		block, blockParts = cs.ValidBlock, cs.ValidBlockParts
 	} else {
+		fmt.Println("ValidBlock === nil")
 		// Create a new proposal block from state/txs from the mempool.
 		block, blockParts = cs.createProposalBlock()
 		if block == nil {
@@ -1061,12 +1080,14 @@ func (cs *State) defaultDecideProposal(height int64, round int) {
 	if err := cs.privValidator.SignProposal(cs.state.ChainID, proposal); err == nil {
 
 		// send proposal and block parts on internal msg queue
-		// 发送内部提案
+		// 发送内部提案 ProposalMessage
 		cs.sendInternalMessage(msgInfo{&ProposalMessage{proposal}, ""})
+		fmt.Println("i WILL SEND ProposalMessage", blockParts.Total())
 		for i := 0; i < blockParts.Total(); i++ {
 			part := blockParts.GetPart(i)
-			// 把block 分片内部发送
+			// 把block 分片内部发送 BlockPartMessage
 			cs.sendInternalMessage(msgInfo{&BlockPartMessage{cs.Height, cs.Round, part}, ""})
+			fmt.Println("sendInternalMessage-->" ,part )
 		}
 		cs.Logger.Info("Signed proposal", "height", height, "round", round, "proposal", proposal)
 		cs.Logger.Debug(fmt.Sprintf("Signed proposal block: %v", block))
@@ -1126,7 +1147,7 @@ func (cs *State) createProposalBlock() (block *types.Block, blockParts *types.Pa
 		cs.Logger.Error(fmt.Sprintf("enterPropose: %v", errPubKeyIsNotSet))
 		return
 	}
-	// 存储提案节点的地址
+	// 存储提案节点的地址 能走到这我肯定就是proposer
 	proposerAddr := cs.privValidatorPubKey.Address()
 
 	return cs.blockExec.CreateProposalBlock(cs.Height, cs.state, commit, proposerAddr)
@@ -1174,19 +1195,23 @@ func (cs *State) defaultDoPrevote(height int64, round int) {
 
 	// If a block is locked, prevote that.
 	if cs.LockedBlock != nil {
+		// 触发了锁机制？？？？  优先投票LockedBlock
 		logger.Info("enterPrevote: Block was locked")
 		cs.signAddVote(types.PrevoteType, cs.LockedBlock.Hash(), cs.LockedBlockParts.Header())
 		return
 	}
 
 	// If ProposalBlock is nil, prevote nil.
+
 	if cs.ProposalBlock == nil {
+		// 如果超时没有收到block 则 prevote nil
 		logger.Info("enterPrevote: ProposalBlock is nil")
 		cs.signAddVote(types.PrevoteType, nil, types.PartSetHeader{})
 		return
 	}
 
 	// Validate proposal block
+	// block 不为空先验证block
 	err := cs.blockExec.ValidateBlock(cs.state, cs.ProposalBlock)
 	if err != nil {
 		// ProposalBlock is invalid, prevote nil.
@@ -1722,6 +1747,7 @@ func (cs *State) defaultSetProposal(proposal *types.Proposal) error {
 	}
 
 	// Does not apply
+	// 接收的提案高度 轮数必须相同复核
 	if proposal.Height != cs.Height || proposal.Round != cs.Round {
 		// 块高和轮数需要在本轮提案时达成一致
 		return nil
@@ -1800,7 +1826,9 @@ func (cs *State) addProposalBlockPart(msg *BlockPartMessage, peerID p2p.ID) (add
 		cs.eventBus.PublishEventCompleteProposal(cs.CompleteProposalEvent())
 
 		// Update Valid* if we can.
+		// 获取投票集合？？
 		prevotes := cs.Votes.Prevotes(cs.Round)
+		// prevote是否达成了2/3
 		blockID, hasTwoThirds := prevotes.TwoThirdsMajority()
 		//  hasTwoThirds  prevote 的 2/3已经达成？？
 		// cs.ValidRound < cs.Round  这个是什么意思？
@@ -1810,6 +1838,7 @@ func (cs *State) addProposalBlockPart(msg *BlockPartMessage, peerID p2p.ID) (add
 				// 提议的 ProposalBlock Hash 和 prevote 的 Hash 相同
 				cs.Logger.Info("Updating valid block to new proposal block",
 					"valid-round", cs.Round, "valid-block-hash", cs.ProposalBlock.Hash())
+				//
 				cs.ValidRound = cs.Round
 				cs.ValidBlock = cs.ProposalBlock
 				cs.ValidBlockParts = cs.ProposalBlockParts
@@ -1899,7 +1928,7 @@ func (cs *State) addVote(
 		"csHeight",
 		cs.Height,
 	)
-
+	debug.PrintStack()
 	// A precommit for the previous height?
 	// These come in while we wait timeoutCommit
 	if vote.Height+1 == cs.Height {
@@ -2063,8 +2092,8 @@ func (cs *State) signVote(
 	valIdx, _ := cs.Validators.GetByAddress(addr)
 
 	vote := &types.Vote{
-		ValidatorAddress: addr,
-		ValidatorIndex:   valIdx,
+		ValidatorAddress: addr,  // 当前节点的addr
+		ValidatorIndex:   valIdx, //
 		Height:           cs.Height,
 		Round:            cs.Round,
 		Timestamp:        cs.voteTime(),
@@ -2115,6 +2144,7 @@ func (cs *State) signAddVote(msgType types.SignedMsgType, hash []byte, header ty
 	// TODO: pass pubKey to signVote
 	vote, err := cs.signVote(msgType, hash, header)
 	if err == nil {
+		// 内部发送投票消息 vote
 		cs.sendInternalMessage(msgInfo{&VoteMessage{vote}, ""})
 		cs.Logger.Info("Signed and pushed vote", "height", cs.Height, "round", cs.Round, "vote", vote, "err", err)
 		return vote

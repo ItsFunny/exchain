@@ -843,7 +843,8 @@ func TestConsensusConfig() *ConsensusConfig {
 	return cfg
 }
 
-// WaitForTxs returns true if the consensus should wait for transactions before entering the propose step
+// WaitForTxs returns true if the consensus should wait for transactions before entering the propose step、
+// WaitForTxs返回true 如果共识应在进入提议步骤之前等待交易
 func (cfg *ConsensusConfig) WaitForTxs() bool {
 	return !cfg.CreateEmptyBlocks || cfg.CreateEmptyBlocksInterval > 0
 }

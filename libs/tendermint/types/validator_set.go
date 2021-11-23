@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"math"
 	"math/big"
+	//"runtime/debug"
 	"sort"
 	"strings"
 
@@ -473,7 +474,8 @@ func computeNewPriorities(updates []*Validator, vals *ValidatorSet, updatedTotal
 // Expects updates to be a list of updates sorted by address with no duplicates or errors,
 // must have been validated with verifyUpdates() and priorities computed with computeNewPriorities().
 func (vals *ValidatorSet) applyUpdates(updates []*Validator) {
-
+	//fmt.Println("applyUpdates!!!!")
+	//debug.PrintStack()
 	existing := vals.Validators
 	merged := make([]*Validator, len(existing)+len(updates))
 	i := 0

@@ -88,6 +88,7 @@ type cmd struct {
 
 // Server allows clients to subscribe/unsubscribe for messages, publishing
 // messages with or without events, and manages internal state.
+// rpc 等查询订阅
 type Server struct {
 	service.BaseService
 

@@ -71,7 +71,7 @@ type Block struct {
 
 	Header     `json:"header"`
 	Data       `json:"data"`
-	Evidence   EvidenceData `json:"evidence"`
+	Evidence   EvidenceData `json:"evidence"` //
 	LastCommit *Commit      `json:"last_commit"`
 }
 

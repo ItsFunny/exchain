@@ -117,9 +117,9 @@ func (blockExec *BlockExecutor) CreateProposalBlock(
 	if blockExec.mempool.GetConfig().MaxGasUsedPerBlock > -1 {
 		maxGas = blockExec.mempool.GetConfig().MaxGasUsedPerBlock
 	}
-	// 从mp 中取txs
+	// 从mp 中取txs test 方式可定为空
 	txs := blockExec.mempool.ReapMaxBytesMaxGas(maxDataBytes, maxGas)
-
+	fmt.Println("txs--->" , txs)
 	return state.MakeBlock(height, txs, commit, evidence, proposerAddr)
 }
 

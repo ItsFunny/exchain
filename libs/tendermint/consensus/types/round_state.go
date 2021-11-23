@@ -78,10 +78,11 @@ type RoundState struct {
 	ProposalBlock      *types.Block        `json:"proposal_block"`
 	ProposalBlockParts *types.PartSet      `json:"proposal_block_parts"`
 	LockedRound        int                 `json:"locked_round"`
-	LockedBlock        *types.Block        `json:"locked_block"`
+	LockedBlock        *types.Block        `json:"locked_block"`  // 锁机制 锁住的block
 	LockedBlockParts   *types.PartSet      `json:"locked_block_parts"`
 
 	// Last known round with POL for non-nil valid block.
+	// 记录最后一轮非空block round??
 	ValidRound int          `json:"valid_round"`
 	ValidBlock *types.Block `json:"valid_block"` // Last known block of POL mentioned above.
 
