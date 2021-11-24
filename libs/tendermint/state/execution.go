@@ -224,6 +224,7 @@ func (blockExec *BlockExecutor) ApplyBlock(
 	}
 
 	// Update evpool with the block and state.
+	// 更新作恶标识
 	blockExec.evpool.Update(block, state)
 
 	fail.Fail() // XXX
@@ -266,6 +267,7 @@ func (blockExec *BlockExecutor) Commit(
 	}
 
 	// Commit block, get hash back
+	//
 	res, err := blockExec.proxyApp.CommitSync()
 	if err != nil {
 		blockExec.logger.Error(

@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"container/list"
 	"fmt"
+	"runtime/debug"
 	"sort"
 	"sync"
 
@@ -498,6 +499,8 @@ func (tree *MutableTree) GetVersioned(key []byte, version int64) (
 // SaveVersion saves a new tree version to disk, based on the current state of
 // the tree. Returns the hash and new version number.
 func (tree *MutableTree) SaveVersion() ([]byte, int64, error) {
+	fmt.Println("SaveVersion!!")
+	debug.PrintStack()
 	version := tree.version + 1
 	if version == 1 && tree.ndb.opts.InitialVersion > 0 {
 		version = int64(tree.ndb.opts.InitialVersion) + 1
