@@ -2,6 +2,7 @@ package state
 
 import (
 	"fmt"
+	"math/big"
 	"time"
 
 	abci "github.com/okex/exchain/libs/tendermint/abci/types"
@@ -434,6 +435,10 @@ func getBeginBlockValidatorInfo(block *types.Block, stateDB dbm.DB) (abci.LastCo
 	}, byzVals
 }
 
+var (
+	GasUsed = new(big.Int)
+)
+
 func validateValidatorUpdates(abciUpdates []abci.ValidatorUpdate,
 	params types.ValidatorParams) error {
 	for _, valUpdate := range abciUpdates {
@@ -498,7 +503,10 @@ func updateState(
 
 	// TODO: allow app to upgrade version
 	nextVersion := state.Version
+	for _, v := range abciResponses.DeliverTxs {
+		GasUsed = new(big.Int).Add(GasUsed, new(big.Int).SetInt64(v.GasUsed))
 
+	}
 	// NOTE: the AppHash has not been populated.
 	// It will be filled on state.Save.
 	return State{
