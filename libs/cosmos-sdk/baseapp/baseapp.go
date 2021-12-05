@@ -781,8 +781,7 @@ func (app *BaseApp) runTx(mode runTxMode, txBytes []byte, tx sdk.Tx, height int6
 			msCache = nil //TODO msCache not write
 			result = nil
 		}
-
-		// update read-only data while tx failed
+		
 		gInfo = sdk.GasInfo{GasWanted: gasWanted, GasUsed: ctx.GasMeter().GasConsumed()}
 
 	}()
