@@ -277,6 +277,7 @@ func (app *BaseApp) DeliverTx(req abci.RequestDeliverTx) abci.ResponseDeliverTx 
 	}
 
 	gInfo, result, _, err = app.runTx(runTxModeDeliver, req.Tx, tx, LatestSimulateTxHeight)
+	fmt.Println("err", err)
 	if err != nil {
 		return sdkerrors.ResponseDeliverTx(err, gInfo.GasWanted, gInfo.GasUsed, app.trace)
 	}

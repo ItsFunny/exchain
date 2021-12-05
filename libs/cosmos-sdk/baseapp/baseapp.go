@@ -710,6 +710,7 @@ func writeCache(cache sdk.CacheMultiStore, ctx sdk.Context) {
 // and execute successfully. An error is returned otherwise.
 func (app *BaseApp) runTx(mode runTxMode, txBytes []byte, tx sdk.Tx, height int64) (gInfo sdk.GasInfo, result *sdk.Result, msCacheList sdk.CacheMultiStore, err error) {
 
+	fmt.Println("runTx-")
 	app.pin(InitCtx, true, mode)
 
 	// NOTE: GasWanted should be returned by the AnteHandler. GasUsed is
@@ -738,6 +739,7 @@ func (app *BaseApp) runTx(mode runTxMode, txBytes []byte, tx sdk.Tx, height int6
 	ctx = ctx.WithCache(sdk.NewCache(app.blockCache, useCache(mode)))
 
 	ms := ctx.MultiStore()
+	app.updateFeeCollectorAccHandler(ctx, sdk.Coins{})
 
 	// only run the tx if there is block gas remaining
 	if (mode == runTxModeDeliver || mode == runTxModeDeliverInAsync) && ctx.BlockGasMeter().IsOutOfGas() {
@@ -781,7 +783,6 @@ func (app *BaseApp) runTx(mode runTxMode, txBytes []byte, tx sdk.Tx, height int6
 		}
 
 		// update read-only data while tx failed
-		ctx.Cache().Write(false)
 		gInfo = sdk.GasInfo{GasWanted: gasWanted, GasUsed: ctx.GasMeter().GasConsumed()}
 
 	}()
@@ -875,6 +876,7 @@ func (app *BaseApp) runTx(mode runTxMode, txBytes []byte, tx sdk.Tx, height int6
 		}
 
 		if err != nil {
+			ctx.Cache().Write(false)
 			return gInfo, nil, nil, err
 		}
 
@@ -904,6 +906,8 @@ func (app *BaseApp) runTx(mode runTxMode, txBytes []byte, tx sdk.Tx, height int6
 	result, err = app.runMsgs(runMsgCtx, msgs, mode)
 	if err == nil && (mode == runTxModeDeliver) {
 		writeCache(msCache, ctx)
+	} else {
+		ctx.Cache().Write(false)
 	}
 
 	runMsgFinish = true

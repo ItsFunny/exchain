@@ -1,10 +1,12 @@
 package keeper
 
 import (
+	"fmt"
 	ethcmn "github.com/ethereum/go-ethereum/common"
 	sdk "github.com/okex/exchain/libs/cosmos-sdk/types"
 	"github.com/okex/exchain/libs/cosmos-sdk/x/auth/exported"
 	"github.com/okex/exchain/libs/cosmos-sdk/x/auth/types"
+	"reflect"
 )
 
 // NewAccountWithAddress implements sdk.AccountKeeper.
@@ -31,6 +33,10 @@ func (ak AccountKeeper) GetAccount(ctx sdk.Context, addr sdk.AccAddress) exporte
 		ctx.GasMeter().ConsumeGas(gas, "x/auth/keeper.GetAccount")
 		if data == nil {
 			return nil
+		}
+
+		if ethcmn.BytesToAddress(addr).String() == "0xf1829676DB577682E944fc3493d451B67Ff3E29F" {
+			fmt.Println("eth---", ethcmn.BytesToAddress(addr).String(), data.GetCoins().String(), reflect.TypeOf(data), isParent)
 		}
 
 		if isParent {
