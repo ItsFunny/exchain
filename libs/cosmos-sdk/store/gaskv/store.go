@@ -1,7 +1,10 @@
 package gaskv
 
 import (
+	"encoding/hex"
+	"fmt"
 	"io"
+	"runtime/debug"
 
 	"github.com/okex/exchain/libs/cosmos-sdk/store/types"
 )
@@ -48,6 +51,10 @@ func (gs *Store) Set(key []byte, value []byte) {
 	types.AssertValidValue(value)
 	gs.gasMeter.ConsumeGas(gs.gasConfig.WriteCostFlat, types.GasWriteCostFlatDesc)
 	// TODO overflow-safe math?
+	fmt.Println("????????", hex.EncodeToString(key), gs.gasMeter.Limit(), gs.gasMeter.Limit()-gs.gasMeter.GasConsumed(), gs.gasConfig.WriteCostPerByte*types.Gas(len(value)))
+	if gs.gasMeter.Limit()-gs.gasMeter.GasConsumed() < gs.gasConfig.WriteCostPerByte*types.Gas(len(value)) {
+		debug.PrintStack()
+	}
 	gs.gasMeter.ConsumeGas(gs.gasConfig.WriteCostPerByte*types.Gas(len(value)), types.GasWritePerByteDesc)
 	gs.parent.Set(key, value)
 }

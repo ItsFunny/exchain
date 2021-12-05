@@ -3,6 +3,8 @@ package cachekv
 import (
 	"bytes"
 	"container/list"
+	"encoding/hex"
+	"fmt"
 	"io"
 	"reflect"
 	"sort"
@@ -129,7 +131,7 @@ func (store *Store) Write() {
 	// at least happen atomically.
 	for _, key := range keys {
 		cacheValue := store.cache[key]
-		//fmt.Println("hex----", hex.EncodeToString([]byte(key)), hex.EncodeToString(cacheValue.value))
+		fmt.Println("hex----", hex.EncodeToString([]byte(key)), hex.EncodeToString(cacheValue.value))
 		switch {
 		case cacheValue.deleted:
 			store.parent.Delete([]byte(key))
