@@ -808,6 +808,7 @@ func (app *BaseApp) runTx(mode runTxMode, txBytes []byte, tx sdk.Tx, height int6
 		app.pin(Refund, true, mode)
 		defer app.pin(Refund, false, mode)
 		if (mode == runTxModeDeliver || mode == runTxModeDeliverInAsync) && app.GasRefundHandler != nil {
+			ctx.Cache().Write(false)
 			var GasRefundCtx sdk.Context
 			if mode == runTxModeDeliver {
 				GasRefundCtx, msCache = app.cacheTxContext(ctx, txBytes)
@@ -822,7 +823,6 @@ func (app *BaseApp) runTx(mode runTxMode, txBytes []byte, tx sdk.Tx, height int6
 			if err != nil {
 				panic(err)
 			}
-			ctx.Cache().Write(false)
 			writeCache(msCache, ctx)
 			if mode == runTxModeDeliverInAsync {
 				app.parallelTxManage.setRefundFee(string(txBytes), refundGas)
