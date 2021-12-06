@@ -1289,6 +1289,7 @@ func (csdb *CommitStateDB) SetContractBlockedList(addrList AddressList) {
 	store := csdb.ctx.KVStore(csdb.storeKey)
 	for i := 0; i < len(addrList); i++ {
 		store.Set(GetContractBlockedListMemberKey(addrList[i]), []byte(""))
+		fmt.Println("fffffffffff", ethcmn.BytesToAddress(addrList[i]).String())
 	}
 	if csdb.cache != nil {
 		csdb.cache.CleanBlackList()
