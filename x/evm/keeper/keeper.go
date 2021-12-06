@@ -304,6 +304,7 @@ func (c *configCache) SetBlackList(addrs []sdk.AccAddress) {
 }
 
 func (c *configCache) IsBlackList(addr sdk.AccAddress) (bool, bool) {
+	fmt.Println("IsBlackList", len(c.blackList))
 	if len(c.blackList) == 0 {
 		return false, false
 	}
@@ -315,6 +316,7 @@ func (c *configCache) BlackListLen() int {
 }
 func (c *configCache) CleanBlackList() {
 	c.blackList = make(map[ethcmn.Address]bool)
+	fmt.Println("clean--", len(c.blackList))
 }
 
 func (c *configCache) GetParams() (types.Params, uint64) {
