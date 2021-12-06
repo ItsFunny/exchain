@@ -7,6 +7,7 @@ import (
 	"github.com/okex/exchain/libs/tendermint/crypto"
 	"github.com/okex/exchain/libs/tendermint/libs/log"
 	"github.com/spf13/viper"
+	"runtime/debug"
 	"time"
 )
 
@@ -141,6 +142,9 @@ func (c *Cache) UpdateAccount(addr AccAddress, acc account, lenBytes int, isDirt
 	ethAddr := ethcmn.BytesToAddress(addr.Bytes())
 	if acc != nil {
 		fmt.Println("settttt", ethAddr.String(), acc.GetCoins().String())
+		if acc.GetCoins().String() == "30.395927739845614466btck-e78,5.191070937235323923okt" {
+			debug.PrintStack()
+		}
 	}
 	c.accMap[ethAddr] = &accountWithCache{
 		acc:     acc,
