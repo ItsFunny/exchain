@@ -1294,6 +1294,9 @@ func (csdb *CommitStateDB) SetContractBlockedList(addrList AddressList) {
 	if csdb.cache != nil {
 		csdb.cache.CleanBlackList()
 	}
+	if csdb.cache != nil {
+		csdb.cache.CleanBlackList()
+	}
 }
 
 // DeleteContractBlockedList deletes the target address list from blocked list store
