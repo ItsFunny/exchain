@@ -327,7 +327,7 @@ func (c *configCache) Clean() {
 	// TODO chainCnnfig?
 }
 func (c *configCache) setParams(data types.Params, gasConsumed uint64) {
-	fmt.Println("Set--", data, gasConsumed)
+	//fmt.Println("Set--", data, gasConsumed)
 	if c.gas != 0 {
 		return
 	}
