@@ -739,7 +739,6 @@ func (app *BaseApp) runTx(mode runTxMode, txBytes []byte, tx sdk.Tx, height int6
 	ctx = ctx.WithCache(sdk.NewCache(app.blockCache, useCache(mode)))
 
 	ms := ctx.MultiStore()
-	app.updateFeeCollectorAccHandler(ctx, sdk.Coins{})
 
 	// only run the tx if there is block gas remaining
 	if (mode == runTxModeDeliver || mode == runTxModeDeliverInAsync) && ctx.BlockGasMeter().IsOutOfGas() {
