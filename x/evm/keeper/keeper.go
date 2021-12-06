@@ -237,10 +237,10 @@ func (k Keeper) GetAccountStorage(ctx sdk.Context, address common.Address) (type
 
 // GetChainConfig gets block height from block consensus hash
 func (k Keeper) GetChainConfig(ctx sdk.Context) (types.ChainConfig, bool) {
-	if data, gas := k.ConfigCache.chainConfig, k.ConfigCache.gasChainConfig; gas != 0 {
-		ctx.GasMeter().ConsumeGas(gas, "evm.keeper.GetChainConfig")
-		return data, true
-	}
+	//if data, gas := k.ConfigCache.chainConfig, k.ConfigCache.gasChainConfig; gas != 0 {
+	//	ctx.GasMeter().ConsumeGas(gas, "evm.keeper.GetChainConfig")
+	//	return data, true
+	//}
 	startGas := ctx.GasMeter().GasConsumed()
 	store := k.Ada.NewStore(ctx.KVStore(k.storeKey), types.KeyPrefixChainConfig)
 	// get from an empty key that's already prefixed by KeyPrefixChainConfig
