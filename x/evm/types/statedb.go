@@ -1329,10 +1329,12 @@ func (csdb *CommitStateDB) GetContractBlockedList() (blockedList AddressList) {
 func (csdb *CommitStateDB) IsContractInBlockedList(contractAddr sdk.AccAddress) bool {
 	if csdb.cache != nil {
 		if stats, ok := csdb.cache.IsBlackList(contractAddr); ok {
+			fmt.Println("back000", stats)
 			return stats
 		}
 	}
 
 	bs := csdb.dbAdapter.NewStore(csdb.ctx.KVStore(csdb.storeKey), KeyPrefixContractBlockedList)
+	fmt.Println("1338---", ethcmn.BytesToAddress(contractAddr).String(), bs.Has(contractAddr))
 	return bs.Has(contractAddr)
 }
