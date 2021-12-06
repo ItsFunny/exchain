@@ -237,10 +237,10 @@ func (k Keeper) GetAccountStorage(ctx sdk.Context, address common.Address) (type
 
 // GetChainConfig gets block height from block consensus hash
 func (k Keeper) GetChainConfig(ctx sdk.Context) (types.ChainConfig, bool) {
-	//if data, gas := k.ConfigCache.chainConfig, k.ConfigCache.gasChainConfig; gas != 0 {
-	//	ctx.GasMeter().ConsumeGas(gas, "evm.keeper.GetChainConfig")
-	//	return data, true
-	//}
+	if data, gas := k.ConfigCache.chainConfig, k.ConfigCache.gasChainConfig; gas != 0 {
+		ctx.GasMeter().ConsumeGas(gas, "evm.keeper.GetChainConfig")
+		return data, true
+	}
 	startGas := ctx.GasMeter().GasConsumed()
 	store := k.Ada.NewStore(ctx.KVStore(k.storeKey), types.KeyPrefixChainConfig)
 	// get from an empty key that's already prefixed by KeyPrefixChainConfig
@@ -304,7 +304,6 @@ func (c *configCache) SetBlackList(addrs []sdk.AccAddress) {
 }
 
 func (c *configCache) IsBlackList(addr sdk.AccAddress) (bool, bool) {
-	fmt.Println("IsBlackList", len(c.blackList))
 	if len(c.blackList) == 0 {
 		return false, false
 	}
@@ -316,7 +315,6 @@ func (c *configCache) BlackListLen() int {
 }
 func (c *configCache) CleanBlackList() {
 	c.blackList = make(map[ethcmn.Address]bool)
-	fmt.Println("clean--", len(c.blackList))
 }
 
 func (c *configCache) GetParams() (types.Params, uint64) {
@@ -326,11 +324,10 @@ func (c *configCache) GetParams() (types.Params, uint64) {
 func (c *configCache) Clean() {
 	c.param = types.Params{}
 	c.gas = 0
-	c.CleanBlackList()
 	// TODO chainCnnfig?
 }
 func (c *configCache) setParams(data types.Params, gasConsumed uint64) {
-	//fmt.Println("Set--", data, gasConsumed)
+
 	if c.gas != 0 {
 		return
 	}
