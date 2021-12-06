@@ -1245,9 +1245,6 @@ func (csdb *CommitStateDB) SetContractDeploymentWhitelist(addrList AddressList) 
 	for i := 0; i < len(addrList); i++ {
 		store.Set(GetContractDeploymentWhitelistMemberKey(addrList[i]), []byte(""))
 	}
-	if csdb.cache != nil {
-		csdb.cache.CleanBlackList()
-	}
 }
 
 // DeleteContractDeploymentWhitelist deletes the target address list from whitelist store
@@ -1260,9 +1257,6 @@ func (csdb *CommitStateDB) DeleteContractDeploymentWhitelist(addrList AddressLis
 	store := csdb.ctx.KVStore(csdb.storeKey)
 	for i := 0; i < len(addrList); i++ {
 		store.Delete(GetContractDeploymentWhitelistMemberKey(addrList[i]))
-	}
-	if csdb.cache != nil {
-		csdb.cache.CleanBlackList()
 	}
 }
 
@@ -1296,6 +1290,9 @@ func (csdb *CommitStateDB) SetContractBlockedList(addrList AddressList) {
 	for i := 0; i < len(addrList); i++ {
 		store.Set(GetContractBlockedListMemberKey(addrList[i]), []byte(""))
 	}
+	if csdb.cache != nil {
+		csdb.cache.CleanBlackList()
+	}
 }
 
 // DeleteContractBlockedList deletes the target address list from blocked list store
@@ -1308,6 +1305,9 @@ func (csdb *CommitStateDB) DeleteContractBlockedList(addrList AddressList) {
 	store := csdb.ctx.KVStore(csdb.storeKey)
 	for i := 0; i < len(addrList); i++ {
 		store.Delete(GetContractBlockedListMemberKey(addrList[i]))
+	}
+	if csdb.cache != nil {
+		csdb.cache.CleanBlackList()
 	}
 }
 
