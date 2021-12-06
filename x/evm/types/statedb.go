@@ -529,7 +529,6 @@ func (csdb *CommitStateDB) GetHeightHash(height uint64) ethcmn.Hash {
 func (csdb *CommitStateDB) GetParams() Params {
 	if csdb.cache != nil {
 		if par, gas := csdb.cache.GetParams(); gas != 0 {
-			fmt.Println("---532", par, gas)
 			return par
 		}
 	}

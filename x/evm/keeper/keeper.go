@@ -321,7 +321,13 @@ func (c *configCache) GetParams() (types.Params, uint64) {
 	return c.param, c.gas
 }
 
+func (c *configCache) Clean() {
+	c.param = types.Params{}
+	c.gas = 0
+	// TODO chainCnnfig?
+}
 func (c *configCache) setParams(data types.Params, gasConsumed uint64) {
+	fmt.Println("Set--", data, gasConsumed)
 	if c.gas != 0 {
 		return
 	}
