@@ -7,7 +7,6 @@ import (
 	"github.com/okex/exchain/libs/cosmos-sdk/x/auth/exported"
 	"github.com/okex/exchain/libs/cosmos-sdk/x/auth/types"
 	"reflect"
-	"runtime/debug"
 )
 
 // NewAccountWithAddress implements sdk.AccountKeeper.
@@ -36,12 +35,9 @@ func (ak AccountKeeper) GetAccount(ctx sdk.Context, addr sdk.AccAddress) exporte
 			return nil
 		}
 
-		if ethcmn.BytesToAddress(addr).String() == "0xf1829676DB577682E944fc3493d451B67Ff3E29F" {
-			if data.GetCoins().String() == "0.000020000000000000okt" {
-				debug.PrintStack()
-			}
-			fmt.Println("eth---", ethcmn.BytesToAddress(addr).String(), data.GetCoins().String(), reflect.TypeOf(data), isParent)
-		}
+		//if ethcmn.BytesToAddress(addr).String() == "0xf1829676DB577682E944fc3493d451B67Ff3E29F" {
+		fmt.Println("eth---", ethcmn.BytesToAddress(addr).String(), data.GetCoins().String(), reflect.TypeOf(data), gas, isParent)
+		//}
 
 		if isParent {
 			// Avoid overwriting of previous data
