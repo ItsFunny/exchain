@@ -528,9 +528,9 @@ func (csdb *CommitStateDB) GetHeightHash(height uint64) ethcmn.Hash {
 // GetParams returns the total set of evm parameters.
 func (csdb *CommitStateDB) GetParams() Params {
 	if csdb.cache != nil {
-		if par, gas := csdb.cache.GetParams(); gas != 0 {
-			return par
-		}
+		//if par, gas := csdb.cache.GetParams(); gas != 0 {
+		//	return par
+		//}
 	}
 	if csdb.params == nil {
 		var params Params
