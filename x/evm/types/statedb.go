@@ -595,7 +595,9 @@ func (csdb *CommitStateDB) GetCode(addr ethcmn.Address) []byte {
 		defer analyzer.StopTxLog(funcName)
 	}
 
-	fmt.Println("?????--", addr.String(), csdb.GetParams().EnableContractBlockedList, csdb.IsContractInBlockedList(addr.Bytes()))
+	if addr.String() == "0x20415e2D1FEF61026A18D3324747BBd205c8608c" {
+		fmt.Println("?????--", addr.String(), csdb.GetParams().EnableContractBlockedList, csdb.IsContractInBlockedList(addr.Bytes()))
+	}
 	// check for the contract calling from blocked list if contract blocked list is enabled
 	if csdb.GetParams().EnableContractBlockedList && csdb.IsContractInBlockedList(addr.Bytes()) {
 
