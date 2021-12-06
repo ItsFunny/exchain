@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/hex"
 	"fmt"
 	"log"
 	"net/http"
@@ -44,6 +45,37 @@ const (
 	defaulPprofFileFlags = os.O_RDWR | os.O_CREATE | os.O_APPEND
 	defaultPprofFilePerm = 0644
 )
+
+func getL(ctx *server.Context) {
+	rootDir := ctx.Config.RootDir
+	dataDir := filepath.Join(rootDir, "data")
+	stateStoreDB, err := openDB(stateDB, dataDir)
+	panicError(err)
+
+	startHeight := viper.GetInt64(FlagStartHeight)
+	abcis, err := sm.LoadABCIResponses(stateStoreDB, startHeight)
+	panicError(err)
+	fmt.Println("abic", startHeight, hex.EncodeToString(abcis.ResultsHash()))
+	for i, v := range abcis.DeliverTxs {
+		fmt.Println("i", i, v.Code, hex.EncodeToString(v.Data), v.Log)
+	}
+}
+func lastResult(ctx *server.Context) *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "abci-res",
+		Short: "",
+		Run: func(cmd *cobra.Command, args []string) {
+			log.Println("--------- repair data start ---------")
+
+			getL(ctx)
+			log.Println("--------- repair data success ---------")
+		},
+	}
+	cmd.Flags().Bool(sm.FlagParalleledTx, false, "parallel execution for evm txs")
+	cmd.Flags().Int64(FlagStartHeight, 0, "Set the start block height for repair")
+	cmd.PersistentFlags().String(flagDBBackend, "goleveldb", "Database backend: goleveldb | rocksdb")
+	return cmd
+}
 
 func replayCmd(ctx *server.Context) *cobra.Command {
 	cmd := &cobra.Command{
