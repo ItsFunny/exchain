@@ -142,7 +142,7 @@ func (c *Cache) UpdateAccount(addr AccAddress, acc account, lenBytes int, isDirt
 	ethAddr := ethcmn.BytesToAddress(addr.Bytes())
 	if acc != nil {
 		fmt.Println("settttt", ethAddr.String(), acc.GetCoins().String())
-		if acc.GetCoins().String() == "30.395927739845614466btck-e78,5.191070937235323923okt" {
+		if acc.GetCoins().String() == "1.000000000000000000okt" {
 			debug.PrintStack()
 		}
 	}
