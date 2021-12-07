@@ -137,7 +137,6 @@ func replayBlock(ctx *server.Context, originDataDir string) {
 	if viper.GetBool(sm.FlagParalleledTx) {
 		baseapp.ParaLog.PrintLog()
 	}
-	fmt.Println("GasUsed", sm.GasUsed)
 }
 
 // panic if error is not nil
