@@ -6,7 +6,6 @@ import (
 	"io"
 	"math/big"
 	"sync"
-	"sync/atomic"
 	"testing"
 
 	"github.com/VictoriaMetrics/fastcache"
@@ -26,11 +25,14 @@ const keccak256HashSize = 100000
 var (
 	_ StateObject = (*stateObject)(nil)
 
-	emptyCodeHash                 = ethcrypto.Keccak256(nil)
-	keccak256HashCache, _         = lru.NewARC(keccak256HashSize)
-	keccak256HashFastCache        = fastcache.New(128 * keccak256HashSize) // 32 + 20 + 32
-	globalKeccakHash              = ethcrypto.NewKeccakState()
-	useGlobalKeccakHashFlag int32 = 0
+	emptyCodeHash          = ethcrypto.Keccak256(nil)
+	keccak256HashCache, _  = lru.NewARC(keccak256HashSize)
+	keccak256HashFastCache = fastcache.New(128 * keccak256HashSize) // 32 + 20 + 32
+	keccak256HashPool      = &sync.Pool{
+		New: func() interface{} {
+			return ethcrypto.NewKeccakState()
+		},
+	}
 )
 
 func keccak256HashWithLruCache(compositeKey []byte) ethcmn.Hash {
@@ -46,16 +48,13 @@ func keccak256HashWithFastCache(compositeKey []byte) (hash ethcmn.Hash) {
 	if _, ok := keccak256HashFastCache.HasGet(hash[:0], compositeKey); ok {
 		return
 	}
-	if atomic.CompareAndSwapInt32(&useGlobalKeccakHashFlag, 0, 1) {
-		defer func() {
-			globalKeccakHash.Reset()
-			atomic.StoreInt32(&useGlobalKeccakHashFlag, 0)
-		}()
-		_, _ = globalKeccakHash.Write(compositeKey)
-		_, _ = globalKeccakHash.Read(hash[:])
-	} else {
-		hash = ethcrypto.Keccak256Hash(compositeKey)
-	}
+
+	keccak := keccak256HashPool.Get().(ethcrypto.KeccakState)
+	defer keccak256HashPool.Put(keccak)
+	keccak.Reset()
+	_, _ = keccak.Write(compositeKey)
+	_, _ = keccak.Read(hash[:])
+
 	keccak256HashFastCache.Set(compositeKey, hash[:])
 	return
 }
