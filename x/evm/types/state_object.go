@@ -389,12 +389,12 @@ func (so *stateObject) GetCommittedState(_ ethstate.Database, key ethcmn.Hash) e
 	// otherwise load the value from the KVStore
 	state := NewState(prefixKey, ethcmn.Hash{})
 
-	sdk.StorageAll++
 	ts := time.Now()
 	ctx := so.stateDB.ctx
 	store := so.stateDB.dbAdapter.NewStore(ctx.KVStore(so.stateDB.storeKey), AddressStoragePrefix(so.Address()))
 	rawValue := store.Get(prefixKey.Bytes())
-	sdk.StorageTime += time.Now().Sub(ts)
+	deltaTs := time.Now().Sub(ts)
+	sdk.MStorage.UpdateTime(deltaTs)
 	if len(rawValue) > 0 {
 		state.Value.SetBytes(rawValue)
 	}

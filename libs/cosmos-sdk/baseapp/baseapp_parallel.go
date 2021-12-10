@@ -4,6 +4,7 @@ import (
 	"encoding/hex"
 	"fmt"
 	"sync"
+	"time"
 
 	sdk "github.com/okex/exchain/libs/cosmos-sdk/types"
 	sdkerrors "github.com/okex/exchain/libs/cosmos-sdk/types/errors"
@@ -101,17 +102,22 @@ func (app *BaseApp) runTxs(txs [][]byte) []*abci.ResponseDeliverTx {
 	asCache := newAsyncCache()
 	signal := make(chan int, 1)
 	rerunIdx := 0
-	txIndex := 0
-	txReps := make([]*executeResult, len(txs))
+	txIndex := uint32(0)
+	txReps := make(map[uint32]*executeResult, 0)
 	deliverTxs := make([]*abci.ResponseDeliverTx, len(txs))
 
+	ts := time.Now()
+	flag := false
 	asyncCb := func(execRes *executeResult) {
 		txReps[execRes.GetCounter()] = execRes
 		if len(txReps) != len(txs) {
 			return
 		}
-		fmt.Println("di er lun", app.deliverState.ctx.BlockHeight())
-		sdk.MStorage.Log("PreLoad End")
+		sdk.MStorage.Log(fmt.Sprintf("PreLoad End %d %f", app.deliverState.ctx.BlockHeight(), time.Now().Sub(ts).Seconds()))
+		if !flag {
+			flag = true
+			ts = time.Now()
+		}
 		sdk.MStorage.Clean()
 		for txReps[txIndex] != nil {
 			s := app.parallelTxManage.txStatus[app.parallelTxManage.indexMapBytes[txIndex]]
@@ -119,14 +125,12 @@ func (app *BaseApp) runTxs(txs [][]byte) []*abci.ResponseDeliverTx {
 			if res.Conflict(asCache) || overFlow(currentGas, res.resp.GasUsed, maxGas) {
 				rerunIdx++
 				s.reRun = true
-				fmt.Println("rerun", txIndex)
 				res = app.deliverTxWithCache(abci.RequestDeliverTx{Tx: txs[txIndex]})
 
 			}
 
 			txRs := res.GetResponse()
 			deliverTxs[txIndex] = &txRs
-			fmt.Println("commit", txIndex)
 			res.Collect(asCache)
 			res.Commit()
 			app.fixFeeCollector(app.parallelTxManage.indexMapBytes[txIndex])
@@ -136,7 +140,7 @@ func (app *BaseApp) runTxs(txs [][]byte) []*abci.ResponseDeliverTx {
 
 			currentGas += uint64(res.resp.GasUsed)
 			txIndex++
-			if txIndex == len(txs) {
+			if int(txIndex) == len(txs) {
 				ParaLog.Update(uint64(app.deliverState.ctx.BlockHeight()), len(txs), rerunIdx)
 				app.logger.Info("Paralleled-tx", "blockHeight", app.deliverState.ctx.BlockHeight(), "len(txs)", len(txs), "Parallel run", len(txs)-rerunIdx, "ReRun", rerunIdx)
 				signal <- 0
@@ -153,7 +157,7 @@ func (app *BaseApp) runTxs(txs [][]byte) []*abci.ResponseDeliverTx {
 	if len(txs) > 0 {
 		//waiting for call back
 		<-signal
-		sdk.MStorage.Log("ReHandle End")
+		sdk.MStorage.Log(fmt.Sprintf("ReHadnle End %d %f", app.deliverState.ctx.BlockHeight(), time.Now().Sub(ts).Seconds()))
 		sdk.MStorage.Clean()
 		receiptsLogs := app.endParallelTxs()
 		for index, v := range receiptsLogs {
