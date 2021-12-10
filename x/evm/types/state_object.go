@@ -6,14 +6,15 @@ import (
 	lru "github.com/hashicorp/golang-lru"
 	"io"
 	"math/big"
+	"time"
 
-	sdk "github.com/okex/exchain/libs/cosmos-sdk/types"
-	authexported "github.com/okex/exchain/libs/cosmos-sdk/x/auth/exported"
 	ethcmn "github.com/ethereum/go-ethereum/common"
 	ethstate "github.com/ethereum/go-ethereum/core/state"
 	ethcrypto "github.com/ethereum/go-ethereum/crypto"
 	"github.com/ethereum/go-ethereum/rlp"
 	"github.com/okex/exchain/app/types"
+	sdk "github.com/okex/exchain/libs/cosmos-sdk/types"
+	authexported "github.com/okex/exchain/libs/cosmos-sdk/x/auth/exported"
 )
 
 const keccak256HashSize = 100000
@@ -388,10 +389,12 @@ func (so *stateObject) GetCommittedState(_ ethstate.Database, key ethcmn.Hash) e
 	// otherwise load the value from the KVStore
 	state := NewState(prefixKey, ethcmn.Hash{})
 
+	sdk.StorageAll++
+	ts := time.Now()
 	ctx := so.stateDB.ctx
 	store := so.stateDB.dbAdapter.NewStore(ctx.KVStore(so.stateDB.storeKey), AddressStoragePrefix(so.Address()))
 	rawValue := store.Get(prefixKey.Bytes())
-
+	sdk.StorageTime += time.Now().Sub(ts)
 	if len(rawValue) > 0 {
 		state.Value.SetBytes(rawValue)
 	}

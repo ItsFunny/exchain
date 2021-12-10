@@ -107,18 +107,26 @@ func (app *BaseApp) runTxs(txs [][]byte) []*abci.ResponseDeliverTx {
 
 	asyncCb := func(execRes *executeResult) {
 		txReps[execRes.GetCounter()] = execRes
+		if len(txReps) != len(txs) {
+			return
+		}
+		fmt.Println("di er lun", app.deliverState.ctx.BlockHeight())
+		sdk.MStorage.Log("PreLoad End")
+		sdk.MStorage.Clean()
 		for txReps[txIndex] != nil {
 			s := app.parallelTxManage.txStatus[app.parallelTxManage.indexMapBytes[txIndex]]
 			res := txReps[txIndex]
 			if res.Conflict(asCache) || overFlow(currentGas, res.resp.GasUsed, maxGas) {
 				rerunIdx++
 				s.reRun = true
+				fmt.Println("rerun", txIndex)
 				res = app.deliverTxWithCache(abci.RequestDeliverTx{Tx: txs[txIndex]})
 
 			}
 
 			txRs := res.GetResponse()
 			deliverTxs[txIndex] = &txRs
+			fmt.Println("commit", txIndex)
 			res.Collect(asCache)
 			res.Commit()
 			app.fixFeeCollector(app.parallelTxManage.indexMapBytes[txIndex])
@@ -145,6 +153,8 @@ func (app *BaseApp) runTxs(txs [][]byte) []*abci.ResponseDeliverTx {
 	if len(txs) > 0 {
 		//waiting for call back
 		<-signal
+		sdk.MStorage.Log("ReHandle End")
+		sdk.MStorage.Clean()
 		receiptsLogs := app.endParallelTxs()
 		for index, v := range receiptsLogs {
 			if len(v) != 0 { // only update evm tx result
