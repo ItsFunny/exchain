@@ -255,6 +255,7 @@ func (app *BaseApp) DeliverTx(req abci.RequestDeliverTx) abci.ResponseDeliverTx 
 
 			var resp abci.ResponseDeliverTx
 			g, r, m, e := app.runTx(runTxModeDeliverInAsync, req.Tx, tx, LatestSimulateTxHeight)
+			fmt.Println("preLoad", e, txStatus.indexInBlock)
 			if e != nil {
 				resp = sdkerrors.ResponseDeliverTx(e, g.GasWanted, g.GasUsed, app.trace)
 			} else {
@@ -341,7 +342,7 @@ func (app *BaseApp) Commit(req abci.RequestCommit) abci.ResponseCommit {
 	}
 
 	return abci.ResponseCommit{
-		Data: commitID.Hash,
+		Data:   commitID.Hash,
 		Deltas: &abci.Deltas{DeltasByte: deltas},
 	}
 }
