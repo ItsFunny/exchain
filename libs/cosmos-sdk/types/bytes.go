@@ -26,7 +26,7 @@ func (s *StorageManager) UpdateTime(ts time.Duration) {
 }
 
 func (s *StorageManager) Log(extra string) {
-	fmt.Println("StorageM", extra, "StorageGetCount", s.StorageAll, "StorageGetTimes", s.StorageTime)
+	fmt.Println("StorageM", extra, "StorageGetCount", s.StorageAll, "StorageGetTimes", s.StorageTime.Milliseconds())
 }
 
 func (s *StorageManager) Clean() {
