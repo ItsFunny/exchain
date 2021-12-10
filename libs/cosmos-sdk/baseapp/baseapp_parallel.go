@@ -125,6 +125,7 @@ func (app *BaseApp) runTxs(txs [][]byte) []*abci.ResponseDeliverTx {
 			if res.Conflict(asCache) || overFlow(currentGas, res.resp.GasUsed, maxGas) {
 				rerunIdx++
 				s.reRun = true
+				fmt.Println("ReRun", txIndex)
 				res = app.deliverTxWithCache(abci.RequestDeliverTx{Tx: txs[txIndex]})
 
 			}
@@ -237,6 +238,7 @@ func (e executeResult) Conflict(cache *asyncCache) bool {
 		//the key we have read was wrote by pre txs
 		if cache.Has(key) && !whiteAccountList[hex.EncodeToString(key)] {
 			rerun = true
+			fmt.Println("conflict", hex.EncodeToString(key))
 			return false // break
 		}
 		return true
