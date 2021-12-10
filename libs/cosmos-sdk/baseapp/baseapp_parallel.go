@@ -87,6 +87,10 @@ func (app *BaseApp) fixFeeCollector(txString string) {
 }
 
 func (app *BaseApp) runTxs(txs [][]byte) []*abci.ResponseDeliverTx {
+	tsAll := time.Now()
+	defer func() {
+		sdk.MStorage.Log(fmt.Sprintf("RunTx End: Height:%d Time:%d", app.deliverState.ctx.BlockHeight(), time.Now().Sub(tsAll).Milliseconds()))
+	}()
 	maxGas := app.getMaximumBlockGas()
 	currentGas := uint64(0)
 	overFlow := func(sumGas uint64, currGas int64, maxGas uint64) bool {

@@ -2,6 +2,7 @@ package types
 
 import (
 	"fmt"
+	"sync"
 	"time"
 )
 
@@ -16,11 +17,14 @@ func CopyBytes(bz []byte) (ret []byte) {
 }
 
 type StorageManager struct {
+	mu          sync.Mutex
 	StorageAll  uint64
 	StorageTime time.Duration
 }
 
 func (s *StorageManager) UpdateTime(ts time.Duration) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
 	s.StorageTime += ts
 	s.StorageAll++
 }
@@ -30,6 +34,8 @@ func (s *StorageManager) Log(extra string) {
 }
 
 func (s *StorageManager) Clean() {
+	s.mu.Lock()
+	defer s.mu.Unlock()
 	s.StorageAll = 0
 	s.StorageTime = time.Duration(0)
 }
