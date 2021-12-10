@@ -113,7 +113,7 @@ func (app *BaseApp) runTxs(txs [][]byte) []*abci.ResponseDeliverTx {
 		if len(txReps) != len(txs) {
 			return
 		}
-		sdk.MStorage.Log(fmt.Sprintf("PreLoad End %d %f", app.deliverState.ctx.BlockHeight(), time.Now().Sub(ts).Seconds()))
+		sdk.MStorage.Log(fmt.Sprintf("PreLoad End: Height:%d Time:%d", app.deliverState.ctx.BlockHeight(), time.Now().Sub(ts).Milliseconds()))
 		if !flag {
 			flag = true
 			ts = time.Now()
@@ -157,7 +157,7 @@ func (app *BaseApp) runTxs(txs [][]byte) []*abci.ResponseDeliverTx {
 	if len(txs) > 0 {
 		//waiting for call back
 		<-signal
-		sdk.MStorage.Log(fmt.Sprintf("ReHadnle End %d %f", app.deliverState.ctx.BlockHeight(), time.Now().Sub(ts).Seconds()))
+		sdk.MStorage.Log(fmt.Sprintf("ReHadnle End: Height:%d Time:%d", app.deliverState.ctx.BlockHeight(), time.Now().Sub(ts).Milliseconds()))
 		sdk.MStorage.Clean()
 		receiptsLogs := app.endParallelTxs()
 		for index, v := range receiptsLogs {
