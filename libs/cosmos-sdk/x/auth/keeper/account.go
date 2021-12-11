@@ -1,6 +1,7 @@
 package keeper
 
 import (
+	"fmt"
 	ethcmn "github.com/ethereum/go-ethereum/common"
 	sdk "github.com/okex/exchain/libs/cosmos-sdk/types"
 	"github.com/okex/exchain/libs/cosmos-sdk/x/auth/exported"
@@ -32,6 +33,7 @@ func (ak AccountKeeper) GetAccount(ctx sdk.Context, addr sdk.AccAddress) exporte
 		if data == nil {
 			return nil
 		}
+		fmt.Println("cache", data.GetCoins().String(), isParent)
 
 		if isParent {
 			// Avoid overwriting of previous data
