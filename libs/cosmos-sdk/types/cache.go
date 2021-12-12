@@ -7,6 +7,7 @@ import (
 	"github.com/okex/exchain/libs/tendermint/crypto"
 	"github.com/okex/exchain/libs/tendermint/libs/log"
 	"github.com/spf13/viper"
+	"runtime/debug"
 	"time"
 )
 
@@ -97,6 +98,7 @@ func (c *Cache) UpdateAccount(addr AccAddress, acc account, lenBytes int, isDirt
 	}
 	ethAddr := ethcmn.BytesToAddress(addr.Bytes())
 	if ethAddr.String() == "0xC82854BBd93E996E7d279F5038dD70E71da7f026" {
+		debug.PrintStack()
 		if acc != nil {
 			fmt.Println("update", ethAddr.String(), acc.GetCoins(), isDirty)
 		} else {
