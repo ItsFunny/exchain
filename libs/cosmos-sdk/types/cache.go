@@ -231,7 +231,7 @@ func (c *Cache) writeStorage(updateDirty bool) {
 func (c *Cache) writeAcc(updateDirty bool) {
 	for addr, v := range c.accMap {
 		if needUpdate(updateDirty, v.isDirty) {
-			if ethcmn.BytesToAddress(v.acc.GetAddress()).String() == "0xC82854BBd93E996E7d279F5038dD70E71da7f026" {
+			if addr.String() == "0xC82854BBd93E996E7d279F5038dD70E71da7f026" {
 				if v.acc != nil {
 					fmt.Println("Set----", v.acc.GetCoins().String())
 				} else {
