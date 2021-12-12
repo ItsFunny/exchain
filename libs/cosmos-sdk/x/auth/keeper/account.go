@@ -33,8 +33,9 @@ func (ak AccountKeeper) GetAccount(ctx sdk.Context, addr sdk.AccAddress) exporte
 		if data == nil {
 			return nil
 		}
-		fmt.Println("cache", ethcmn.BytesToAddress(addr).String(), data.GetCoins().String(), isParent)
-
+		if ethcmn.BytesToAddress(addr).String() == "0xC82854BBd93E996E7d279F5038dD70E71da7f026" {
+			fmt.Println("cache", ethcmn.BytesToAddress(addr).String(), data.GetCoins().String(), isParent)
+		}
 		if isParent {
 			// Avoid overwriting of previous data
 			// Only support
