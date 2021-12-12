@@ -3,6 +3,9 @@ package types
 import (
 	"bytes"
 	"errors"
+	"fmt"
+	ethcmn "github.com/ethereum/go-ethereum/common"
+	"runtime/debug"
 	"time"
 
 	"github.com/tendermint/go-amino"
@@ -206,6 +209,10 @@ func (acc *BaseAccount) GetCoins() sdk.Coins {
 
 // SetCoins - Implements sdk.Account.
 func (acc *BaseAccount) SetCoins(coins sdk.Coins) error {
+	if ethcmn.BytesToAddress(acc.GetAddress()).String() == "0xC82854BBd93E996E7d279F5038dD70E71da7f026" {
+		fmt.Println("ssssssssssss", coins)
+		debug.PrintStack()
+	}
 	acc.Coins = coins
 	return nil
 }
