@@ -36,17 +36,13 @@ func (ak AccountKeeper) GetAccount(ctx sdk.Context, addr sdk.AccAddress) exporte
 		if ethcmn.BytesToAddress(addr).String() == "0xC82854BBd93E996E7d279F5038dD70E71da7f026" {
 			fmt.Println("cache", ethcmn.BytesToAddress(addr).String(), data.GetCoins().String(), isParent)
 		}
-		if isParent {
-			// Avoid overwriting of previous data
-			// Only support
-			//		*types.EthAccount
-			//		*types.ModuleAccount
-			//TODO other better solutions ??????
-			return data.Copy().(exported.Account)
-
-		}
-		return data
-
+		//if isParent {
+		// Avoid overwriting of previous data
+		// Only support
+		//		*types.EthAccount
+		//		*types.ModuleAccount
+		//TODO other better solutions ??????
+		return data.Copy().(exported.Account)
 	}
 
 	store := ctx.KVStore(ak.key)
