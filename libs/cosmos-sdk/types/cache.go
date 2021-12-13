@@ -220,7 +220,6 @@ func (c *Cache) writeStorage() {
 		}
 	}
 	c.storageMap = make(map[ethcmn.Address]map[ethcmn.Hash]*storageWithCache)
-	c.codeMap = make(map[ethcmn.Hash]*codeWithCache)
 }
 
 func (c *Cache) writeAcc() {
