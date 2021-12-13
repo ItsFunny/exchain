@@ -44,6 +44,7 @@ func (ak AccountKeeper) GetAccount(ctx sdk.Context, addr sdk.AccAddress) exporte
 			//TODO other better solutions ??????
 			return data.Copy().(exported.Account)
 		}
+		return data
 	}
 
 	store := ctx.KVStore(ak.key)
