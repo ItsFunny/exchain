@@ -192,35 +192,28 @@ func (c *Cache) Write(updateDirty bool) {
 		return
 	}
 
+	if !updateDirty {
+		c.accMap = make(map[ethcmn.Address]*accountWithCache)
+		c.storageMap = make(map[ethcmn.Address]map[ethcmn.Hash]*storageWithCache, 0)
+		c.codeMap = make(map[ethcmn.Hash]*codeWithCache)
+	}
+
 	if c.parent == nil {
 		return
 	}
-	c.writeStorage(updateDirty)
-	c.writeAcc(updateDirty)
-	c.writeCode(updateDirty)
+	c.writeStorage()
+	c.writeAcc()
+	c.writeCode()
 }
 
-func needUpdate(updateDirty bool, isDirty bool) bool {
-	//Read-Only Data
-	if !isDirty {
-		return true
-	}
-
-	// Dirty Data
-	if updateDirty {
-		return true
-	}
-	return false
-}
-
-func (c *Cache) writeStorage(updateDirty bool) {
+func (c *Cache) writeStorage() {
 	for addr, storages := range c.storageMap {
 		if _, ok := c.parent.storageMap[addr]; !ok {
 			c.parent.storageMap[addr] = make(map[ethcmn.Hash]*storageWithCache, 0)
 		}
 
 		for key, v := range storages {
-			if needUpdate(updateDirty, v.dirty) {
+			if v.dirty {
 				c.parent.storageMap[addr][key] = v
 			}
 		}
@@ -228,9 +221,9 @@ func (c *Cache) writeStorage(updateDirty bool) {
 	c.storageMap = make(map[ethcmn.Address]map[ethcmn.Hash]*storageWithCache)
 }
 
-func (c *Cache) writeAcc(updateDirty bool) {
+func (c *Cache) writeAcc() {
 	for addr, v := range c.accMap {
-		if needUpdate(updateDirty, v.isDirty) {
+		if v.isDirty {
 			if addr.String() == "0xC82854BBd93E996E7d279F5038dD70E71da7f026" {
 				if v.acc != nil {
 					fmt.Println("Set----", v.acc.GetCoins().String())
@@ -244,9 +237,9 @@ func (c *Cache) writeAcc(updateDirty bool) {
 	}
 	c.accMap = make(map[ethcmn.Address]*accountWithCache)
 }
-func (c *Cache) writeCode(updateDirty bool) {
+func (c *Cache) writeCode() {
 	for hash, v := range c.codeMap {
-		if needUpdate(updateDirty, v.isDirty) {
+		if v.isDirty {
 			c.parent.codeMap[hash] = v
 		}
 	}
