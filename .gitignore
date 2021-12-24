@@ -26,7 +26,7 @@ docs/tutorial
 dist
 tools-stamp
 doc
-
+_cache_evm*
 # Data - ideally these don't exist
 baseapp/data/*
 client/lcd/keys/*
@@ -76,5 +76,5 @@ contract_tests/*
 dev/cache/*
 result.txt
 ethermint
-_cache_evm
+_cache_evm2
 dump.rdb
