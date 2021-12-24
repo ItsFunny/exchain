@@ -20,9 +20,11 @@ import (
 var (
 	_ log.Logger = Log{}
 )
-func init(){
-	logcomponent.RegisterBlackList("log/LogAdapter","log/filter","log/tracing_logger")
+
+func init() {
+	logcomponent.RegisterBlackList("log/LogAdapter", "log/filter", "log/tracing_logger", "app/app.go", "iavl/logger")
 }
+
 type Log struct {
 	Logger v2.Logger
 }

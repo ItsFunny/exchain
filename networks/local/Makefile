@@ -2,5 +2,4 @@
 
 all:
 	docker build --tag exchain/node -f node/Dockerfile ../../../exchain
-
 .PHONY: all

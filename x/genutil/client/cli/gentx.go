@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"bytes"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"io/ioutil"
@@ -20,11 +21,11 @@ import (
 	"github.com/okex/exchain/libs/cosmos-sdk/types/module"
 	"github.com/okex/exchain/libs/cosmos-sdk/x/auth"
 	"github.com/okex/exchain/libs/cosmos-sdk/x/auth/client/utils"
+	tmos "github.com/okex/exchain/libs/tendermint/libs/os"
+	tmtypes "github.com/okex/exchain/libs/tendermint/types"
 	"github.com/okex/exchain/x/genutil"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
-	tmos "github.com/okex/exchain/libs/tendermint/libs/os"
-	tmtypes "github.com/okex/exchain/libs/tendermint/types"
 )
 
 // GenTxCmd builds the application's gentx command
@@ -92,8 +93,19 @@ func GenTxCmd(ctx *server.Context, cdc *codec.Codec, mbm module.BasicManager, sm
 
 			name := viper.GetString(flags.FlagName)
 			key, err := kb.Get(name)
+			list, err := kb.List()
+			if nil != err {
+				panic(err)
+			}
+			for _, info := range list {
+				fmt.Println(info)
+				fmt.Println(info.GetName())
+			}
 			if err != nil {
 				return err
+			}
+			if key == nil {
+				return errors.New("name not exists,name=" + name)
 			}
 
 			// Set flags for creating gentx
@@ -112,8 +124,9 @@ func GenTxCmd(ctx *server.Context, cdc *codec.Codec, mbm module.BasicManager, sm
 				return err
 			}
 
-			txBldr := auth.NewTxBuilderFromCLI(inBuf).WithTxEncoder(utils.GetTxEncoder(cdc))
 			cliCtx := clictx.NewCLIContext().WithCodec(cdc)
+			cliCtx.FromAddress = key.GetAddress()
+			txBldr := auth.NewTxBuilderFromCLI(inBuf).WithTxEncoder(utils.GetTxEncoder(cdc))
 
 			// Set the generate-only flag here after the CLI context has
 			// been created. This allows the from name/key to be correctly populated.
@@ -137,7 +150,6 @@ func GenTxCmd(ctx *server.Context, cdc *codec.Codec, mbm module.BasicManager, sm
 				fmt.Println("Offline key passed in. Use `tx sign` command to sign:")
 				return utils.PrintUnsignedStdTx(txBldr, cliCtx, []sdk.Msg{msg})
 			}
-
 			// write the unsigned transaction to the buffer
 			w := bytes.NewBuffer([]byte{})
 			cliCtx = cliCtx.WithOutput(w)

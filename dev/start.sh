@@ -76,7 +76,7 @@ exchaincli config keyring-backend test
 #    "eth_address": "0xbbE4733d85bc2b90682147779DA49caB38C0aA1F",
 exchaincli keys add --recover captain -m "puzzle glide follow cruel say burst deliver wild tragic galaxy lumber offer" -y
 
-#    "eth_address": "0x83D83497431C2D3FEab296a9fba4e5FaDD2f7eD0",
+#    "eth_address": "0x83D83497431C2D3FEab296a9fba4e5FaDD2f7eD0", 就是添加一个addr 而已
 exchaincli keys add --recover admin16 -m "palace cube bitter light woman side pave cereal donor bronze twice work" -y
 
 # Set moniker and chain-id for Ethermint (Moniker can be anything, chain-id must be an integer)
@@ -94,7 +94,7 @@ if [ "$(uname -s)" == "Darwin" ]; then
     sed -i "" 's/"enable_call": false/"enable_call": true/' $HOME_SERVER/config/genesis.json
     sed -i "" 's/"enable_create": false/"enable_create": true/' $HOME_SERVER/config/genesis.json
     sed -i "" 's/"enable_contract_blocked_list": false/"enable_contract_blocked_list": true/' $HOME_SERVER/config/genesis.json
-else 
+else
     sed -i 's/"enable_call": false/"enable_call": true/' $HOME_SERVER/config/genesis.json
     sed -i 's/"enable_create": false/"enable_create": true/' $HOME_SERVER/config/genesis.json
     sed -i 's/"enable_contract_blocked_list": false/"enable_contract_blocked_list": true/' $HOME_SERVER/config/genesis.json

@@ -160,6 +160,7 @@ func PrintUnsignedStdTx(txBldr authtypes.TxBuilder, cliCtx context.CLIContext, m
 	}
 
 	_, _ = fmt.Fprintf(cliCtx.Output, "%s\n", json)
+
 	return nil
 }
 
