@@ -1,12 +1,14 @@
 package state
 
 import (
+	"fmt"
 	gorid "github.com/okex/exchain/libs/goroutine"
 	"github.com/okex/exchain/libs/iavl"
 	"github.com/okex/exchain/libs/tendermint/delta"
 	redis_cgi "github.com/okex/exchain/libs/tendermint/delta/redis-cgi"
 	"github.com/okex/exchain/libs/tendermint/libs/compress"
 	"github.com/okex/exchain/libs/tendermint/libs/log"
+	"github.com/okex/exchain/libs/tendermint/trace"
 	"sync/atomic"
 	"time"
 
@@ -20,6 +22,8 @@ type DeltaContext struct {
 
 	downloadDelta bool
 	uploadDelta bool
+	applied float64
+	missed float64
 	logger log.Logger
 	compressBroker compress.CompressBroker
 }
@@ -38,6 +42,7 @@ func newDeltaContext() *DeltaContext {
 
 	// todo can config different compress algorithm
 	dp.compressBroker = &compress.Flate{}
+	dp.missed = 0.000001
 
 	return dp
 }
@@ -51,7 +56,7 @@ func (dc *DeltaContext) init(l log.Logger) {
 	)
 
 	if dc.uploadDelta || dc.downloadDelta {
-		dc.deltaBroker = redis_cgi.NewRedisClient(types.RedisUrl(), types.RedisAuth(), l)
+		dc.deltaBroker = redis_cgi.NewRedisClient(types.RedisUrl(), types.RedisAuth(), types.RedisExpire(), l)
 		dc.logger.Info("Init delta broker", "url", types.RedisUrl())
 	}
 
@@ -63,20 +68,31 @@ func (dc *DeltaContext) init(l log.Logger) {
 	}
 }
 
+func (dc *DeltaContext) appliedRate() float64 {
+	return dc.applied / (dc.applied + dc.missed)
+}
 
 func (dc *DeltaContext) postApplyBlock(height int64, delta *types.Deltas,
 	abciResponses *ABCIResponses, res []byte) {
 
 	// rpc
 	if dc.downloadDelta {
-		useDeltas := false
-		if delta != nil {
-			useDeltas = true
-		}
-		dc.logger.Info("Post apply block", "delta-applied", useDeltas, "delta", delta, "gid", gorid.GoRId)
-		atomic.StoreInt64(&dc.lastCommitHeight, height)
 
-		if useDeltas && types.IsFastQuery() {
+		applied := false
+		if delta != nil {
+			applied = true
+			dc.applied += float64(len(abciResponses.DeliverTxs))
+		} else {
+			dc.missed += float64(len(abciResponses.DeliverTxs))
+		}
+
+		trace.GetElapsedInfo().AddInfo(trace.Delta,
+			fmt.Sprintf("applied<%t>, rate<%.2f>", applied, dc.appliedRate()))
+
+		dc.logger.Info("Post apply block", "height", height, "delta-applied", applied,
+			"applied-rate", dc.appliedRate(), "delta", delta)
+
+		if applied && types.IsFastQuery() {
 			UseWatchData(delta.WatchBytes)
 		}
 	}
@@ -111,14 +127,25 @@ func (dc *DeltaContext) upload(height int64, abciResponses *ABCIResponses, res [
 }
 
 func (dc *DeltaContext) uploadData(deltas *types.Deltas) {
-
 	if deltas == nil {
 		return
 	}
 
 	dc.logger.Info("Upload delta started:", "target-height", deltas.Height, "gid", gorid.GoRId)
 
-	// todo get distributed lock, otherwise return
+	// get redisLock
+	locked := dc.deltaBroker.GetLocker()
+	dc.logger.Info("Upload delta started:", "locked", locked, "gid", gorid.GoRId)
+	if !locked {
+		return
+	}
+
+	// get LatestHeight and judge if need to upload deltas
+	needUpload := dc.deltaBroker.SetLatestHeight(deltas.Height)
+	dc.logger.Info("Upload delta started:", "upload", needUpload, "gid", gorid.GoRId)
+	if !needUpload {
+		return
+	}
 	t0 := time.Now()
 	// marshal deltas to bytes
 	deltaBytes, err := deltas.Marshal()
@@ -141,6 +168,9 @@ func (dc *DeltaContext) uploadData(deltas *types.Deltas) {
 		return
 	}
 
+	// release locker
+	dc.deltaBroker.ReleaseLocker()
+
 	t3 := time.Now()
 	dc.logger.Info("Upload delta finished",
 		"target-height", deltas.Height,
@@ -151,7 +181,7 @@ func (dc *DeltaContext) uploadData(deltas *types.Deltas) {
 		"gid", gorid.GoRId)
 }
 
-
+// get delta from dds
 func (dc *DeltaContext) prepareStateDelta(height int64) (dds *types.Deltas) {
 	if !dc.downloadDelta {
 		return
@@ -171,6 +201,7 @@ func (dc *DeltaContext) prepareStateDelta(height int64) (dds *types.Deltas) {
 
 func (dc *DeltaContext) downloadRoutine() {
 	var height int64
+	var lastRemoved int64
 	var buffer int64 = 5
 	ticker := time.NewTicker(50 * time.Millisecond)
 
@@ -183,12 +214,22 @@ func (dc *DeltaContext) downloadRoutine() {
 			// git rid of all deltas before <height>
 			removed, left := dc.dataMap.remove(lastCommitHeight)
 			dc.logger.Info("Updated target delta height",
-				"gid", gorid.GoRId,
 				"target-height", height,
 				"lastCommitHeight", lastCommitHeight,
 				"removed", removed,
 				"left", left,
 			)
+		} else {
+			if height % 10 == 0 && lastRemoved != lastCommitHeight {
+				removed, left := dc.dataMap.remove(lastCommitHeight)
+				dc.logger.Info("Remove stale delta",
+					"target-height", height,
+					"lastCommitHeight", lastCommitHeight,
+					"removed", removed,
+					"left", left,
+				)
+				lastRemoved = lastCommitHeight
+			}
 		}
 
 		lastCommitHeight = atomic.LoadInt64(&dc.lastCommitHeight)
@@ -205,7 +246,6 @@ func (dc *DeltaContext) downloadRoutine() {
 }
 
 func (dc *DeltaContext) download(height int64) (error, *types.Deltas){
-
 	dc.logger.Debug("Download delta started:", "target-height", height, "gid", gorid.GoRId)
 
 	t0 := time.Now()
