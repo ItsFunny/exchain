@@ -2,6 +2,7 @@ package context
 
 import (
 	"fmt"
+	"github.com/okex/exchain/libs/cosmos-sdk/types/errors"
 	"io"
 	"os"
 
@@ -260,38 +261,37 @@ func (ctx CLIContext) PrintOutput(toPrint interface{}) error {
 // an address or key name. If genOnly is true, only a valid Bech32 cosmos
 // address is returned.
 func GetFromFields(input io.Reader, from string, genOnly bool) (sdk.AccAddress, string, error) {
-	return sdk.AccAddress(from), from, nil
-	// if from == "" {
-	// 	return nil, "", nil
-	// }
-	//
-	// if genOnly {
-	// 	addr, err := sdk.AccAddressFromBech32(from)
-	// 	if err != nil {
-	// 		return nil, "", errors.Wrap(err, "must provide a valid Bech32 address for generate-only")
-	// 	}
-	//
-	// 	return addr, "", nil
-	// }
-	// // 获取keyRing的db地址
-	// keybase, err := keys.NewKeyring(sdk.KeyringServiceName(),
-	// 	viper.GetString(flags.FlagKeyringBackend), viper.GetString(flags.FlagHome), input)
-	// if err != nil {
-	// 	return nil, "", err
-	// }
-	//
-	// var info keys.Info
-	// if addr, err := sdk.AccAddressFromBech32(from); err == nil {
-	// 	info, err = keybase.GetByAddress(addr)
-	// 	if err != nil {
-	// 		return nil, "", err
-	// 	}
-	// } else {
-	// 	info, err = keybase.Get(from)
-	// 	if err != nil {
-	// 		return nil, "", err
-	// 	}
-	// }
-	//
-	// return info.GetAddress(), info.GetName(), nil
+	if from == "" {
+		return nil, "", nil
+	}
+
+	if genOnly {
+		addr, err := sdk.AccAddressFromBech32(from)
+		if err != nil {
+			return nil, "", errors.Wrap(err, "must provide a valid Bech32 address for generate-only")
+		}
+
+		return addr, "", nil
+	}
+	// 获取keyRing的db地址
+	keybase, err := keys.NewKeyring(sdk.KeyringServiceName(),
+		viper.GetString(flags.FlagKeyringBackend), viper.GetString(flags.FlagHome), input)
+	if err != nil {
+		return nil, "", err
+	}
+
+	var info keys.Info
+	if addr, err := sdk.AccAddressFromBech32(from); err == nil {
+		info, err = keybase.GetByAddress(addr)
+		if err != nil {
+			return nil, "", err
+		}
+	} else {
+		info, err = keybase.Get(from)
+		if err != nil {
+			return nil, "", err
+		}
+	}
+
+	return info.GetAddress(), info.GetName(), nil
 }
