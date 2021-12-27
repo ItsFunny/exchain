@@ -2,12 +2,13 @@ package keeper
 
 import (
 	"bytes"
+	"encoding/hex"
 	"fmt"
 	"sort"
 
 	sdk "github.com/okex/exchain/libs/cosmos-sdk/types"
-	"github.com/okex/exchain/x/staking/types"
 	abci "github.com/okex/exchain/libs/tendermint/abci/types"
+	"github.com/okex/exchain/x/staking/types"
 )
 
 // ApplyAndReturnValidatorSetUpdates applies and returns accumulated updates to the bonded validator set. Also,
@@ -168,7 +169,7 @@ func (k Keeper) unjailValidator(ctx sdk.Context, validator types.Validator) {
 
 // bondValidator performs all the store operations for when a validator status becomes bonded
 func (k Keeper) bondValidator(ctx sdk.Context, validator types.Validator) types.Validator {
-
+	fmt.Println(hex.EncodeToString(validator.ConsPubKey.Address()))
 	// delete the validator by power index, as the key will change
 	k.DeleteValidatorByPowerIndex(ctx, validator)
 

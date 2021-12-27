@@ -3,7 +3,7 @@ version: '3'
 services:
   exchaindnode0:
     container_name: exchaindnode0
-    image: "exchain/node"
+    image: exchain/node:v0.0.1
     ports:
       - "26656-26657:26656-26657"
     environment:
@@ -17,7 +17,7 @@ services:
 
   exchaindnode1:
     container_name: exchaindnode1
-    image: "exchain/node"
+    image: exchain/node:v0.0.1
     ports:
       - "26659-26660:26656-26657"
     environment:
@@ -31,7 +31,7 @@ services:
 
   exchaindnode2:
     container_name: exchaindnode2
-    image: "exchain/node"
+    image: exchain/node:v0.0.1
     environment:
       - ID=2
       - LOG=${LOG:-exchaind.log}
@@ -45,7 +45,7 @@ services:
 
   exchaindnode3:
     container_name: exchaindnode3
-    image: "exchain/node"
+    image: exchain/node:v0.0.1
     environment:
       - ID=3
       - LOG=${LOG:-exchaind.log}
